@@ -59,13 +59,16 @@ class App {
   #mapEvent;
   #workout = [];
   constructor() {
+    // Get user postion
     this._getPostion();
 
+    // Get data from local storage
+    this._getLocalStorage();
+
+    // Atach event handler
     form.addEventListener('submit', this._newWorkout.bind(this));
-
     inputType.addEventListener('change', this._toggleElevationField.bind(this));
-
-    containerWorkouts.addEventListener("click" , this._moveToPopup.bind(this))
+    containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
   _getPostion() {
@@ -94,6 +97,10 @@ class App {
 
     // Handling Clicks on  map
     this.#map.on('click', this._showForm.bind(this));
+
+    this.#workout.forEach(work => {
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapE) {
@@ -103,18 +110,16 @@ class App {
   }
 
   _hideForm() {
-        inputDistance.value =
+    inputDistance.value =
       inputCadence.value =
       inputDuration.value =
       inputElevation.value =
-      '';
-    form.style.display="none"
+        '';
+    form.style.display = 'none';
     form.classList.add('hidden');
     setTimeout(() => {
-    form.style.display="grid"
-      
+      form.style.display = 'grid';
     }, 1000);
-    
   }
 
   _toggleElevationField() {
@@ -172,7 +177,10 @@ class App {
     this._renderWorkout(workout);
 
     // Hide Form + Clear Input fields
-this._hideForm()
+    this._hideForm();
+
+    // Set local storage to all workouts
+    this._setLocaleStorage();
   }
   // Display Marker
   _renderWorkoutMarker(workout) {
@@ -187,7 +195,9 @@ this._hideForm()
           className: `${workout.type}-popup`,
         }),
       )
-      .setPopupContent(`${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`)
+      .setPopupContent(
+        `${workout.type === 'running' ? '🏃‍♂️' : '🚴‍♀️'} ${workout.description}`,
+      )
       .openPopup();
   }
   _renderWorkout(workout) {
@@ -237,20 +247,34 @@ this._hideForm()
     form.insertAdjacentHTML('afterend', html);
   }
   _moveToPopup(e) {
-    const workoutEL = e.target.closest(".workout")
-    
-    if (!workoutEL) return
-    
-    const workout = this.#workout.find(work => work.id === workoutEL.dataset.id)
-   
+    const workoutEL = e.target.closest('.workout');
+
+    if (!workoutEL) return;
+
+    const workout = this.#workout.find(
+      work => work.id === workoutEL.dataset.id,
+    );
+
     this.#map.setView(workout.coords, 13, {
       animate: true,
       pan: {
-        duration:1
-      }
+        duration: 1,
+      },
+    });
+  }
+  _setLocaleStorage() {
+    localStorage.setItem('workouts', JSON.stringify(this.#workout));
+  }
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+    if (!data) return;
+    this.#workout = data;
+        this.#workout.forEach(work => {
+      this._renderWorkout(work)
+
     })
   }
-
+  
 }
 
 const app = new App();
